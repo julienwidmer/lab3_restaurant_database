@@ -32,6 +32,7 @@ const RestaurantSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    restaurant_id: String
 })
 
 /* Restaurant JSON example:
