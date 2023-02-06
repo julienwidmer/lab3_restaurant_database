@@ -9,12 +9,25 @@ const routes = express.Router();
 const RestaurantModel = require("../models/restaurantModel");
 
 // http://localhost:3000/restaurants
+// http://localhost:3000/restaurants?sortBy=ASC
+// http://localhost:3000/restaurants?sortBy=DESC
 // Return all restaurants details
 routes.get("/restaurants", async (req, res) => {
+    const sortOrder = req.query.sortBy === "DESC" ? -1 : 1;
+
     try {
-        const restaurants = await RestaurantModel.find();
+        const restaurants = await RestaurantModel.find()
+            .select({
+                "_id": 1,
+                "cuisine": 1,
+                "name": 1,
+                "city": 1,
+                "restaurant_id": 1
+            })
+            .sort({"restaurant_id": sortOrder});
 
         if (restaurants != "") {
+            // Filter restaurant details
             res.status(200).send(restaurants);
         } else {
             // Client side error
@@ -32,7 +45,7 @@ routes.get("/restaurants/cuisine/:cuisine", async (req, res) => {
     try {
         // Retrieve all restaurants with specified cuisine
         const cuisineType = req.params.cuisine;
-        let restaurants = await RestaurantModel.find({"cuisine": cuisineType});
+        const restaurants = await RestaurantModel.find({"cuisine": cuisineType});
 
         if (restaurants != "") {
             res.status(200).send(restaurants);
