@@ -11,20 +11,27 @@ const RestaurantModel = require("../models/restaurantModel");
 // http://localhost:3000/restaurants
 // http://localhost:3000/restaurants?sortBy=ASC
 // http://localhost:3000/restaurants?sortBy=DESC
-// Return all restaurants details
+// Return restaurants details
 routes.get("/restaurants", async (req, res) => {
-    const sortOrder = req.query.sortBy === "DESC" ? -1 : 1;
-
     try {
-        const restaurants = await RestaurantModel.find()
-            .select({
-                "_id": 1,
-                "cuisine": 1,
-                "name": 1,
-                "city": 1,
-                "restaurant_id": 1
-            })
-            .sort({"restaurant_id": sortOrder});
+        let restaurants = [];
+
+        if (req.query.sortBy == null) {
+            // Retrieve all restaurants details
+            restaurants = await RestaurantModel.find()
+        } else {
+            // Retrieve specific restaurants details and sort in ASC or DESC order
+            const sortOrder = req.query.sortBy === "DESC" ? -1 : 1;
+            restaurants = await RestaurantModel.find()
+                .select({
+                    "_id": 1,
+                    "cuisine": 1,
+                    "name": 1,
+                    "city": 1,
+                    "restaurant_id": 1
+                })
+                .sort({"restaurant_id": sortOrder});
+        }
 
         if (restaurants != "") {
             // Filter restaurant details
@@ -40,7 +47,9 @@ routes.get("/restaurants", async (req, res) => {
 })
 
 // http://localhost:3000/restaurants/cuisine/Japanese
-// Return Japanese restaurants details
+// http://localhost:3000/restaurants/cuisine/Bakery
+// http://localhost:3000/restaurants/cuisine/Italian
+// Return all restaurants details from a specific cuisine type
 routes.get("/restaurants/cuisine/:cuisine", async (req, res) => {
     try {
         // Retrieve all restaurants with specified cuisine
@@ -48,6 +57,35 @@ routes.get("/restaurants/cuisine/:cuisine", async (req, res) => {
         const restaurants = await RestaurantModel.find({"cuisine": cuisineType});
 
         if (restaurants != "") {
+            res.status(200).send(restaurants);
+        } else {
+            // Client side error
+            res.status(400).send({message: "No restaurants found."});
+        }
+    } catch (error) {
+        // Server side error
+        res.status(500).send({message: `Error while retrieving restaurants: ${error}`})
+    }
+})
+
+// http://localhost:3000/restaurants/Delicatessen
+// Return specific Delicatessen restaurants details
+routes.get("/restaurants/Delicatessen", async (req, res) => {
+    try {
+        const restaurants = await RestaurantModel.find({
+            "cuisine": "Delicatessen",
+            "city": {"$ne": "Brooklyn"}
+        })
+            .select({
+                "cuisine": 1,
+                "name": 1,
+                "city": 1,
+                "_id": 0
+            })
+            .sort({"name": 1});
+
+        if (restaurants != "") {
+            // Filter restaurant details
             res.status(200).send(restaurants);
         } else {
             // Client side error
