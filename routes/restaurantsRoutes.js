@@ -12,7 +12,27 @@ const RestaurantModel = require("../models/restaurantModel");
 // Return all restaurants details
 routes.get("/restaurants", async (req, res) => {
     try {
-        const restaurants = await RestaurantModel.find({});
+        const restaurants = await RestaurantModel.find();
+
+        if (restaurants != "") {
+            res.status(200).send(restaurants);
+        } else {
+            // Client side error
+            res.status(400).send({message: "No restaurants found."});
+        }
+    } catch (error) {
+        // Server side error
+        res.status(500).send({message: `Error while retrieving restaurants: ${error}`})
+    }
+})
+
+// http://localhost:3000/restaurants/cuisine/Japanese
+// Return Japanese restaurants details
+routes.get("/restaurants/cuisine/:cuisine", async (req, res) => {
+    try {
+        // Retrieve all restaurants with specified cuisine
+        const cuisineType = req.params.cuisine;
+        let restaurants = await RestaurantModel.find({"cuisine": cuisineType});
 
         if (restaurants != "") {
             res.status(200).send(restaurants);
